@@ -838,7 +838,14 @@ class GeminiAnalyzer:
                 last_error = e
                 continue
 
-        raise Exception(f"All LLM models failed (tried {len(models_to_try)} model(s)). Last error: {last_error}")
+        attempted_models = ", ".join(models_to_try[:8])
+        if len(models_to_try) > 8:
+            attempted_models += ", ..."
+        raise Exception(
+            "All LLM models failed "
+            f"(tried {len(models_to_try)} model(s): {attempted_models}). "
+            f"Last error: {type(last_error).__name__}: {last_error}"
+        )
 
     def generate_text(
         self,

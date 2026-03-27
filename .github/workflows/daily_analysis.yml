@@ -369,6 +369,26 @@ jobs:
           echo "  Anthropic Key:  $([ -n "$ANTHROPIC_API_KEY" ] && echo '✅ 已配置' || echo '⚪ 未配置')"
           echo "  Anthropic Keys: $([ -n "$ANTHROPIC_API_KEYS" ] && echo '✅ 已配置' || echo '⚪ 未配置')"
           echo ""
+          echo "【LLM 解析结果】"
+          python - <<'PY'
+          from src.config import get_config, get_configured_llm_models
+          
+          config = get_config()
+          print(f"  主模型: {config.litellm_model or '(auto/empty)'}")
+          print(f"  Fallback: {', '.join(config.litellm_fallback_models) if config.litellm_fallback_models else '(none)'}")
+          router_models = get_configured_llm_models(config.llm_model_list)
+          print(f"  渠道路由模型数: {len(router_models)}")
+          if router_models:
+              print(f"  渠道路由模型: {', '.join(router_models[:12])}")
+          issues = config.validate_structured()
+          problem_issues = [i for i in issues if i.severity in ('error', 'warning')]
+          if problem_issues:
+              print("  配置告警:")
+              for issue in problem_issues[:10]:
+                  field = f" [{issue.field}]" if issue.field else ""
+                  print(f"    - {issue.severity.upper()}{field} {issue.message}")
+          PY
+          echo ""
           echo "【搜索引擎】"
           echo "  Bocha API Keys: $([ -n "$BOCHA_API_KEYS" ] && echo '✅ 已配置' || echo '⚪ 未配置')"
           echo "  Tavily API Keys: $([ -n "$TAVILY_API_KEYS" ] && echo '✅ 已配置' || echo '⚪ 未配置')"
