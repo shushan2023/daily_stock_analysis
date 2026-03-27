@@ -241,7 +241,7 @@ jobs:
           
           # 方式四：邮件
           EMAIL_SENDER: ${{ vars.EMAIL_SENDER || secrets.EMAIL_SENDER }}
-          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_PASSWORD: ${{ vars.EMAIL_PASSWORD || secrets.EMAIL_PASSWORD }}
           EMAIL_RECEIVERS: ${{ vars.EMAIL_RECEIVERS || secrets.EMAIL_RECEIVERS }}
           EMAIL_SENDER_NAME: ${{ vars.EMAIL_SENDER_NAME || secrets.EMAIL_SENDER_NAME || 'daily_stock_analysis股票分析助手' }}
           
@@ -409,6 +409,9 @@ jobs:
           esac
           echo ""
           echo "【通知渠道】"
+          echo "  邮件发件人: $([ -n "$EMAIL_SENDER" ] && echo '✅ 已配置' || echo '⚪ 未配置')"
+          echo "  邮件授权码: $([ -n "$EMAIL_PASSWORD" ] && echo '✅ 已配置' || echo '⚪ 未配置')"
+          echo "  邮件收件人: $([ -n "$EMAIL_RECEIVERS" ] && echo '✅ 已配置' || echo '⚪ 未配置(将默认发送给发件人本人)')"
           echo "  PushPlus: $([ -n "$PUSHPLUS_TOKEN" ] && echo '✅ 已配置' || echo '⚪ 未配置')"
           echo "  企业微信: $([ -n "$WECHAT_WEBHOOK_URL" ] && echo '✅ 已配置' || echo '⚪ 未配置')"
           echo "  飞书: $([ -n "$FEISHU_WEBHOOK_URL" ] && echo '✅ 已配置' || echo '⚪ 未配置')"
@@ -462,4 +465,7 @@ jobs:
           if [ -f "logs/stock_analysis_$(date +%Y%m%d).log" ]; then
             echo "📜 最近日志（最后 30 行）:"
             tail -30 logs/stock_analysis_*.log 2>/dev/null || echo "无日志"
+            echo ""
+            echo "📬 通知相关日志:"
+            grep -E "通知渠道|通知发送完成|邮件发送|认证错误|SMTP|跳过推送" logs/stock_analysis_*.log | tail -20 || echo "未找到通知相关日志"
           fi
