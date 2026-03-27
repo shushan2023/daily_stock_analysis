@@ -53,6 +53,37 @@ class LLMChannelConfigTestCase(unittest.TestCase):
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
+    def test_openrouter_preserves_vendor_prefixed_model_ids(self, _mock_parse_yaml, _mock_setup_env) -> None:
+        env = {
+            "LLM_CHANNELS": "openrouter",
+            "LLM_OPENROUTER_PROTOCOL": "openai",
+            "LLM_OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
+            "LLM_OPENROUTER_API_KEY": "sk-or-v1-test-value",
+            "LLM_OPENROUTER_MODELS": "google/gemini-2.0-flash-exp:free,openai/gpt-4o-mini,anthropic/claude-3.5-sonnet",
+        }
+
+        with patch.dict(os.environ, env, clear=True):
+            config = Config._load_from_env()
+
+        self.assertEqual(
+            config.llm_channels[0]["models"],
+            [
+                "google/gemini-2.0-flash-exp:free",
+                "openai/gpt-4o-mini",
+                "anthropic/claude-3.5-sonnet",
+            ],
+        )
+        self.assertEqual(
+            [item["litellm_params"]["model"] for item in config.llm_model_list],
+            [
+                "google/gemini-2.0-flash-exp:free",
+                "openai/gpt-4o-mini",
+                "anthropic/claude-3.5-sonnet",
+            ],
+        )
+
+    @patch("src.config.setup_env")
+    @patch.object(Config, "_parse_litellm_yaml", return_value=[])
     def test_alias_prefixed_models_are_canonicalized_once(self, _mock_parse_yaml, _mock_setup_env) -> None:
         env = {
             "LLM_CHANNELS": "vertex",
