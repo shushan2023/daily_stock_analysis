@@ -240,14 +240,14 @@ def normalize_llm_channel_model(model: str, protocol: Optional[str], base_url: O
     parsed_base_url = urlparse(base_url or "")
     is_openrouter = (parsed_base_url.hostname or "").lower().endswith("openrouter.ai")
 
-    if "/" in normalized_model:
-        if is_openrouter and resolved_protocol == "openai":
-            # OpenRouter model IDs frequently use vendor/model syntax
-            # (for example google/gemini-2.0-flash-exp:free). Preserve them
-            # verbatim so LiteLLM routes through the OpenAI-compatible base URL
-            # instead of incorrectly remapping them to another provider.
+    if is_openrouter:
+        # LiteLLM expects OpenRouter models to be prefixed with the
+        # openrouter provider, e.g. openrouter/google/gemini-2.0-flash-exp:free.
+        if normalized_model.startswith("openrouter/"):
             return normalized_model
+        return f"openrouter/{normalized_model}"
 
+    if "/" in normalized_model:
         # The model already has a slash, e.g. 'deepseek-ai/DeepSeek-V3'.
         # Check if the prefix is a known LiteLLM provider; if so, keep it.
         # Otherwise (e.g. HuggingFace-style IDs on SiliconFlow), prepend

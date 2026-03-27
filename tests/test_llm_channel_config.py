@@ -53,13 +53,13 @@ class LLMChannelConfigTestCase(unittest.TestCase):
 
     @patch("src.config.setup_env")
     @patch.object(Config, "_parse_litellm_yaml", return_value=[])
-    def test_openrouter_preserves_vendor_prefixed_model_ids(self, _mock_parse_yaml, _mock_setup_env) -> None:
+    def test_openrouter_prefixes_models_with_openrouter_provider(self, _mock_parse_yaml, _mock_setup_env) -> None:
         env = {
             "LLM_CHANNELS": "openrouter",
             "LLM_OPENROUTER_PROTOCOL": "openai",
             "LLM_OPENROUTER_BASE_URL": "https://openrouter.ai/api/v1",
             "LLM_OPENROUTER_API_KEY": "sk-or-v1-test-value",
-            "LLM_OPENROUTER_MODELS": "google/gemini-2.0-flash-exp:free,openai/gpt-4o-mini,anthropic/claude-3.5-sonnet",
+            "LLM_OPENROUTER_MODELS": "google/gemini-2.0-flash-exp:free,openai/gpt-4o-mini,anthropic/claude-3.5-sonnet,deepseek/deepseek-chat",
         }
 
         with patch.dict(os.environ, env, clear=True):
@@ -68,17 +68,19 @@ class LLMChannelConfigTestCase(unittest.TestCase):
         self.assertEqual(
             config.llm_channels[0]["models"],
             [
-                "google/gemini-2.0-flash-exp:free",
-                "openai/gpt-4o-mini",
-                "anthropic/claude-3.5-sonnet",
+                "openrouter/google/gemini-2.0-flash-exp:free",
+                "openrouter/openai/gpt-4o-mini",
+                "openrouter/anthropic/claude-3.5-sonnet",
+                "openrouter/deepseek/deepseek-chat",
             ],
         )
         self.assertEqual(
             [item["litellm_params"]["model"] for item in config.llm_model_list],
             [
-                "google/gemini-2.0-flash-exp:free",
-                "openai/gpt-4o-mini",
-                "anthropic/claude-3.5-sonnet",
+                "openrouter/google/gemini-2.0-flash-exp:free",
+                "openrouter/openai/gpt-4o-mini",
+                "openrouter/anthropic/claude-3.5-sonnet",
+                "openrouter/deepseek/deepseek-chat",
             ],
         )
 
